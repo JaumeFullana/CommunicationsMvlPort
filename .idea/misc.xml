@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout-land/controller_main.xml" value="0.10934744268077601" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout-land/fragment_controller.xml" value="0.21516754850088182" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout/activity_chat.xml" value="0.2" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout/activity_main.xml" value="0.176" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout/controller_main.xml" value="0.12916666666666668" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout/fragment_chat.xml" value="0.10364583333333334" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout/fragment_controller.xml" value="0.1956521739130435" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout/fragment_input.xml" value="0.15208333333333332" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/Communications/app/src/main/res/layout/fragment_layout.xml" value="0.15896739130434784" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>
