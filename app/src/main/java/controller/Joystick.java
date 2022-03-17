@@ -1,35 +1,438 @@
 package controller;
 
-public class Joystick {
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewConfiguration;
 
-    private int outerCircleRadius;
-    private int innerCircleRadius;
-    private int outerCircleCenterPositionX;
-    private int outerCircleCenterPositionY;
-    private int innerCircleCenterPositionX;
-    private int innerCircleCenterPositionY;
+import communications.R;
 
-    public Joystick(int centerPositionX, int centerPositionY, int outerCircleRadiys, int innerCircleRadiys){
+public class Joystick extends View implements Runnable {
 
-        //To make up the joystick
-        this.outerCircleCenterPositionX = centerPositionX;
-        this.outerCircleCenterPositionY = centerPositionY;
-        this.innerCircleCenterPositionX = centerPositionX;
-        this.innerCircleCenterPositionY = centerPositionY;
+    private static final int DEFAULT_LOOP_INTERVAL = 50;
+    /*
+     * Used to allow a slight move without cancelling MultipleLongPress
+     */
+    private static final int MOVE_TOLERANCE = 10;
+    private static final int DEFAULT_COLOR_BUTTON = Color.BLACK;
+    private static final int DEFAULT_COLOR_BORDER = Color.TRANSPARENT;
+    private static final int DEFAULT_ALPHA_BORDER = 255;
+    private static final int DEFAULT_BACKGROUND_COLOR = Color.TRANSPARENT;
+    private static final int DEFAULT_SIZE = 200;
+    private static final int DEFAULT_WIDTH_BORDER = 3;
 
-        //Radii of circles
-        this.outerCircleRadius = outerCircleRadiys;
-        this.outerCircleRadius = innerCircleRadiys;
+    /*
+     * Default behavior to fixed center (not auto-defined)
+     */
+    private static final boolean DEFAULT_FIXED_CENTER = true;
 
-        //paint of circles
 
+    /*
+     * Default behavior to auto re-center button (automatically recenter the button)
+     */
+    private static final boolean DEFAULT_AUTO_RECENTER_BUTTON = true;
+
+
+    /*
+     * Default behavior to button stickToBorder (button stay on the border)
+     */
+    private static final boolean DEFAULT_BUTTON_STICK_TO_BORDER = false;
+
+    private Paint mPaintCircleButton;
+    private Paint mPaintCircleBorder;
+    private Paint mPaintBackground;
+    private Paint mPaintBitmapButton;
+    private Bitmap mButtonBitmap;
+
+
+    /*
+     * Ratio used to define the size of the button
+     */
+    private float mButtonSizeRatio;
+
+
+    /*
+     * Ratio used to define the size of the background
+     */
+    private float mBackgroundSizeRatio;
+
+    private int mPosX = 0;
+    private int mPosY = 0;
+    private int mCenterX = 0;
+    private int mCenterY = 0;
+
+    private int mFixedCenterX = 0;
+    private int mFixedCenterY = 0;
+
+    private boolean mFixedCenter;
+    private boolean mAutoReCenterButton;
+    private boolean mButtonStickToBorder;
+    private boolean enabled;
+
+    private int mButtonRadius;
+    private int mBorderRadius;
+    private int mBorderAlpha;
+    private float mBackgroundRadius;
+
+    private OnMoveListener mCallback;
+
+    private long mLoopInterval = DEFAULT_LOOP_INTERVAL;
+    private Thread mThread = new Thread(this);
+
+    private final Handler mHandlerMultipleLongPress = new Handler();
+    private Runnable mRunnableMultipleLongPress;
+    private int mMoveTolerance;
+
+    public static int BUTTON_DIRECTION_BOTH = 0;
+
+    /*
+     * The allowed direction of the button is define by the value of this parameter:
+     * - a negative value for horizontal axe
+     * - a positive value for vertical axe
+     * - zero for both axes
+     */
+    private int mButtonDirection = 0;
+
+    /**
+     * Constructor that is called when inflating a Joystick from XML.
+     * @param context The Context that the Joystick is using.
+     * @param attrs The attributes of the XML that is inflating the Joystick.
+     */
+    public Joystick(Context context, AttributeSet attrs) {
+        super(context, attrs);
+
+        TypedArray styledAttributes = context.getTheme().obtainStyledAttributes(
+                attrs,
+                R.styleable.Joystick,
+                0, 0);
+
+        int buttonColor;
+        int borderColor;
+        int backgroundColor;
+        int borderWidth;
+        Drawable buttonDrawable;
+        try {
+            buttonColor = styledAttributes.getColor(R.styleable.Joystick_buttonColor, DEFAULT_COLOR_BUTTON);
+            borderColor = styledAttributes.getColor(R.styleable.Joystick_borderColor, DEFAULT_COLOR_BORDER);
+            mBorderAlpha = styledAttributes.getInt(R.styleable.Joystick_borderAlpha, DEFAULT_ALPHA_BORDER);
+            backgroundColor = styledAttributes.getColor(R.styleable.Joystick_backgroundColor, DEFAULT_BACKGROUND_COLOR);
+            borderWidth = styledAttributes.getDimensionPixelSize(R.styleable.Joystick_borderWidth, DEFAULT_WIDTH_BORDER);
+            mFixedCenter = styledAttributes.getBoolean(R.styleable.Joystick_fixedCenter, DEFAULT_FIXED_CENTER);
+            mAutoReCenterButton = styledAttributes.getBoolean(R.styleable.Joystick_autoReCenterButton, DEFAULT_AUTO_RECENTER_BUTTON);
+            mButtonStickToBorder = styledAttributes.getBoolean(R.styleable.Joystick_buttonStickToBorder, DEFAULT_BUTTON_STICK_TO_BORDER);
+            buttonDrawable = styledAttributes.getDrawable(R.styleable.Joystick_buttonImage);
+            enabled = styledAttributes.getBoolean(R.styleable.Joystick_enabled, true);
+            mButtonSizeRatio = styledAttributes.getFraction(R.styleable.Joystick_buttonSizeRatio, 1, 1, 0.25f);
+            mBackgroundSizeRatio = styledAttributes.getFraction(R.styleable.Joystick_backgroundSizeRatio, 1, 1, 0.75f);
+            mButtonDirection = styledAttributes.getInteger(R.styleable.Joystick_buttonDirection, BUTTON_DIRECTION_BOTH);
+        } finally {
+            styledAttributes.recycle();
+        }
+
+        mPaintCircleButton = new Paint();
+        mPaintCircleButton.setAntiAlias(true);
+        mPaintCircleButton.setColor(buttonColor);
+        mPaintCircleButton.setStyle(Paint.Style.FILL);
+
+        if (buttonDrawable != null) {
+            if (buttonDrawable instanceof BitmapDrawable) {
+                mButtonBitmap = ((BitmapDrawable) buttonDrawable).getBitmap();
+                mPaintBitmapButton = new Paint();
+            }
+        }
+
+        mPaintCircleBorder = new Paint();
+        mPaintCircleBorder.setAntiAlias(true);
+        mPaintCircleBorder.setColor(borderColor);
+        mPaintCircleBorder.setStyle(Paint.Style.STROKE);
+        mPaintCircleBorder.setStrokeWidth(borderWidth);
+
+        if (borderColor != Color.TRANSPARENT) {
+            mPaintCircleBorder.setAlpha(mBorderAlpha);
+        }
+
+        mPaintBackground = new Paint();
+        mPaintBackground.setAntiAlias(true);
+        mPaintBackground.setColor(backgroundColor);
+        mPaintBackground.setStyle(Paint.Style.FILL);
     }
 
-    public void draw(){
-
+    /**
+     * Get the center of the joystick
+     */
+    private void initPosition() {
+        mFixedCenterX = mCenterX = mPosX = getWidth() / 2;
+        mFixedCenterY = mCenterY = mPosY = getWidth() / 2;
     }
 
-    public void update(){
 
+    /**
+     * Draw the background, the border and the button of the Joystick. The button of the Joystick
+     * can be either an image or a paint.
+     * @param canvas the canvas on which the Joystick will be drawn
+     */
+    @Override
+    protected void onDraw(Canvas canvas) {
+
+        canvas.drawCircle(mFixedCenterX, mFixedCenterY, mBackgroundRadius, mPaintBackground);
+        canvas.drawCircle(mFixedCenterX, mFixedCenterY, mBorderRadius, mPaintCircleBorder);
+
+        if (mButtonBitmap != null) {
+            canvas.drawBitmap(
+                    mButtonBitmap,
+                    mPosX + mFixedCenterX - mCenterX - mButtonRadius,
+                    mPosY + mFixedCenterY - mCenterY - mButtonRadius,
+                    mPaintBitmapButton
+            );
+        }
+        else {
+            canvas.drawCircle(
+                    mPosX + mFixedCenterX - mCenterX,
+                    mPosY + mFixedCenterY - mCenterY,
+                    mButtonRadius,
+                    mPaintCircleButton
+            );
+        }
+    }
+
+
+    /**
+     * Overrided method, this is called when the size of this view has changed.
+     * Here we get the center of the view and the radius to draw all the shapes.
+     * The radius is based on the smallest value between width and height.
+     * @param width int, current width of this view.
+     * @param height int, current height of this view.
+     * @param oldWidth int, old width of this view.
+     * @param oldHeight int, old height of this view.
+     */
+    @Override
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight);
+
+        initPosition();
+        int d = Math.min(width, height);
+        mButtonRadius = (int) (d / 2 * mButtonSizeRatio);
+        mBorderRadius = (int) (d / 2 * mBackgroundSizeRatio);
+        mBackgroundRadius = mBorderRadius - (mPaintCircleBorder.getStrokeWidth() / 2);
+
+        if (mButtonBitmap != null) {
+            mButtonBitmap = Bitmap.createScaledBitmap(mButtonBitmap, mButtonRadius * 2,mButtonRadius * 2, true);
+        }
+    }
+
+    /**
+     * Overrided method, set the measured values to resize the view to a certain width and height
+     * @param widthMeasureSpec width
+     * @param heightMeasureSpec height
+     */
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int d = Math.min(measure(widthMeasureSpec), measure(heightMeasureSpec));
+        setMeasuredDimension(d, d);
+    }
+
+    /**
+     * Overrided method, checks that the measure passed by parameter is not 0 (UNSPECIFIED). If it's 0 it gets the
+     * default size value.
+     * @param measureSpec measure to check.
+     * @return int the measure checked.
+     */
+    private int measure(int measureSpec) {
+        int measure=DEFAULT_SIZE;
+        if (MeasureSpec.getMode(measureSpec) != MeasureSpec.UNSPECIFIED) {
+            measure=MeasureSpec.getSize(measureSpec);
+        }
+
+        return measure;
+    }
+
+    /**
+     * Overrided method, handle touch screen motion event. Move the button according to the
+     * finger coordinate and detect longPress by multiple pointers only.
+     * @param event The motion event.
+     * @return True if the event was handled, false otherwise.
+     */
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // if disabled we don't move the
+        if (!enabled) {
+            return true;
+        }
+
+        // to move the button according to the finger coordinate
+        // (or limited to one axe according to direction option
+        mPosY = mButtonDirection < 0 ? mCenterY : (int) event.getY(); // direction negative is horizontal axe
+        mPosX = mButtonDirection > 0 ? mCenterX : (int) event.getX(); // direction positive is vertical axe
+
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+
+            // stop listener because the finger left the touch screen
+            mThread.interrupt();
+
+            // re-center the button or not (depending on settings)
+            if (mAutoReCenterButton) {
+                resetButtonPosition();
+
+                // update now the last strength and angle which should be zero after resetButton
+                if (mCallback != null)
+                    mCallback.onMove(getAngle(), getStrength());
+            }
+
+            // if mAutoReCenterButton is false we will send the last strength and angle a bit
+            // later only after processing new position X and Y otherwise it could be above the border limit
+        }
+
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            if (mThread != null && mThread.isAlive()) {
+                mThread.interrupt();
+            }
+
+            mThread = new Thread(this);
+            mThread.start();
+
+            if (mCallback != null)
+                mCallback.onMove(getAngle(), getStrength());
+        }
+
+        // handle first touch and long press with multiple touch only
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                // when the first touch occurs we update the center (if set to auto-defined center)
+                if (!mFixedCenter) {
+                    mCenterX = mPosX;
+                    mCenterY = mPosY;
+                }
+                break;
+
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                // when the second finger touch
+                if (event.getPointerCount() == 2) {
+                    mHandlerMultipleLongPress.postDelayed(mRunnableMultipleLongPress, ViewConfiguration.getLongPressTimeout()*2);
+                    mMoveTolerance = MOVE_TOLERANCE;
+                }
+                break;
+            }
+
+            case MotionEvent.ACTION_MOVE:
+                mMoveTolerance--;
+                if (mMoveTolerance == 0) {
+                    mHandlerMultipleLongPress.removeCallbacks(mRunnableMultipleLongPress);
+                }
+                break;
+
+            case MotionEvent.ACTION_POINTER_UP: {
+                // when the last multiple touch is released
+                if (event.getPointerCount() == 2) {
+                    mHandlerMultipleLongPress.removeCallbacks(mRunnableMultipleLongPress);
+                }
+                break;
+            }
+        }
+
+        double abs = Math.sqrt((mPosX - mCenterX) * (mPosX - mCenterX)
+                + (mPosY - mCenterY) * (mPosY - mCenterY));
+
+        // (abs > mBorderRadius) means button is too far therefore we limit to border
+        // (buttonStickBorder && abs != 0) means wherever is the button we stick it to the border except when abs == 0
+        if (abs > mBorderRadius || (mButtonStickToBorder && abs != 0)) {
+            mPosX = (int) ((mPosX - mCenterX) * mBorderRadius / abs + mCenterX);
+            mPosY = (int) ((mPosY - mCenterY) * mBorderRadius / abs + mCenterY);
+        }
+
+        if (!mAutoReCenterButton) {
+            // Now update the last strength and angle if not reset to center
+            if (mCallback != null)
+                mCallback.onMove(getAngle(), getStrength());
+        }
+
+        // to force a new draw
+        invalidate();
+
+        return true;
+    }
+
+    /**
+     * Process the angle following the 360° counter-clock protractor rules.
+     * @return the angle of the button
+     */
+    private int getAngle() {
+        int angle = (int) Math.toDegrees(Math.atan2(mCenterY - mPosY, mPosX - mCenterX));
+        return angle < 0 ? angle + 360 : angle;
+    }
+
+    /**
+     * Process the strength as a percentage of the distance between the center and the border.
+     * @return the strength of the button
+     */
+    private int getStrength() {
+        return (int) (100 * Math.sqrt((mPosX - mCenterX)
+                * (mPosX - mCenterX) + (mPosY - mCenterY)
+                * (mPosY - mCenterY)) / mBorderRadius);
+    }
+
+    /**
+     * Reset the button position to the center.
+     */
+    public void resetButtonPosition() {
+        mPosX = mCenterX;
+        mPosY = mCenterY;
+    }
+
+    /**
+     * Sets a new OnMoveListener interface object with the default loop interval.
+     * @param listener The object that that will receive the onMove call
+     */
+    public void setOnMoveListener(OnMoveListener listener) {
+        mCallback = listener;
+        mLoopInterval = DEFAULT_LOOP_INTERVAL;
+    }
+
+    /**
+     * Sets a new OnMoveListener interface object with a loop interval passed by parameter.
+     * @param listener The callback that will run
+     * @param loopInterval Refresh rate to be invoked in milliseconds
+     */
+    public void setOnMoveListener(OnMoveListener listener, int loopInterval) {
+        mCallback = listener;
+        mLoopInterval = loopInterval;
+    }
+
+    /**
+     * Enable or disable the joystick. The button won't move and onMove won't be called.
+     * @param enabled boolean to enable or disable the jostick.
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * Overrided method, sends the value of the move to the listener each x miliseconds, where x is
+     * the value assigned to mLoopInterval.
+     */
+    @Override
+    public void run() {
+        while (!Thread.interrupted()) {
+            post(new Runnable() {
+                public void run() {
+                    if (mCallback != null)
+                        mCallback.onMove(getAngle(), getStrength());
+                }
+            });
+
+            try {
+                Thread.sleep(mLoopInterval);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
     }
 }

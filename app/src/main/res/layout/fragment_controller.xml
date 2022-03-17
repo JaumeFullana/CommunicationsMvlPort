@@ -4,17 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <io.github.controlwear.virtual.joystick.android.JoystickView
+    <controller.Joystick
         android:id="@+id/joystickView"
         android:rotationX="-180"
         android:layout_width="409dp"
         android:layout_height="206dp"
-        custom:JV_backgroundColor="#009688"
-        custom:JV_borderColor="#00796B"
-        custom:JV_borderWidth="4dp"
-        custom:JV_buttonColor="#FF6E40"
-        custom:JV_buttonSizeRatio="15%"
-        custom:JV_fixedCenter="false"
+        custom:backgroundColor="#009688"
+        custom:borderColor="#00796B"
+        custom:borderWidth="4dp"
+        custom:buttonColor="#FF6E40"
+        custom:buttonSizeRatio="15%"
+        custom:fixedCenter="true"
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintTop_toTopOf="parent" />
 

@@ -4,21 +4,18 @@ import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
-import android.service.controls.Control;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import communications.CommunicationController;
 import communications.ConnectionInterface;
 import communications.ProtocolDataPacket;
 import communications.R;
-import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 public class ControllerFragment extends Fragment implements ConnectionInterface {
 
-    private JoystickView joystick;
+    private Joystick joystick;
     private ControllerActivity activity;
     private String mac;
     private int lastAngle;
@@ -37,7 +34,7 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
         this.activity = ((ControllerActivity)this.getActivity());
         joystick = view.findViewById(R.id.joystickView);
         this.activity.getController().addAllListeners(this);
-        joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
+        joystick.setOnMoveListener(new OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
                 Log.d("angle", ""+angle);
