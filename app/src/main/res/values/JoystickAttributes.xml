@@ -9,7 +9,6 @@
         <attr name="borderAlpha" format="integer"/>
         <attr name="backgroundColor" format="color"/>
         <attr name="borderWidth" format="dimension"/>
-        <attr name="fixedCenter" format="boolean"/>
         <attr name="autoReCenterButton" format="boolean"/>
         <attr name="buttonStickToBorder" format="boolean"/>
         <attr name="enabled" format="boolean"/>

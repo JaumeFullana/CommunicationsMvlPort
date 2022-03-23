@@ -19,32 +19,13 @@ import communications.R;
 public class Joystick extends View implements Runnable {
 
     private static final int DEFAULT_LOOP_INTERVAL = 50;
-    /*
-     * Used to allow a slight move without cancelling MultipleLongPress
-     */
-    private static final int MOVE_TOLERANCE = 10;
     private static final int DEFAULT_COLOR_BUTTON = Color.BLACK;
     private static final int DEFAULT_COLOR_BORDER = Color.TRANSPARENT;
     private static final int DEFAULT_ALPHA_BORDER = 255;
     private static final int DEFAULT_BACKGROUND_COLOR = Color.TRANSPARENT;
     private static final int DEFAULT_SIZE = 200;
     private static final int DEFAULT_WIDTH_BORDER = 3;
-
-    /*
-     * Default behavior to fixed center (not auto-defined)
-     */
-    private static final boolean DEFAULT_FIXED_CENTER = true;
-
-
-    /*
-     * Default behavior to auto re-center button (automatically recenter the button)
-     */
     private static final boolean DEFAULT_AUTO_RECENTER_BUTTON = true;
-
-
-    /*
-     * Default behavior to button stickToBorder (button stay on the border)
-     */
     private static final boolean DEFAULT_BUTTON_STICK_TO_BORDER = false;
 
     private Paint mPaintCircleButton;
@@ -73,7 +54,6 @@ public class Joystick extends View implements Runnable {
     private int mFixedCenterX = 0;
     private int mFixedCenterY = 0;
 
-    private boolean mFixedCenter;
     private boolean mAutoReCenterButton;
     private boolean mButtonStickToBorder;
     private boolean enabled;
@@ -83,16 +63,10 @@ public class Joystick extends View implements Runnable {
     private int mBorderAlpha;
     private float mBackgroundRadius;
 
-    private OnMoveListener mCallback;
+    private OnMoveListener moveListener;
 
     private long mLoopInterval = DEFAULT_LOOP_INTERVAL;
     private Thread mThread = new Thread(this);
-
-    private final Handler mHandlerMultipleLongPress = new Handler();
-    private Runnable mRunnableMultipleLongPress;
-    private int mMoveTolerance;
-
-    public static int BUTTON_DIRECTION_BOTH = 0;
 
     /*
      * The allowed direction of the button is define by the value of this parameter:
@@ -100,6 +74,7 @@ public class Joystick extends View implements Runnable {
      * - a positive value for vertical axe
      * - zero for both axes
      */
+    public static int BUTTON_DIRECTION_BOTH = 0;
     private int mButtonDirection = 0;
 
     /**
@@ -126,7 +101,6 @@ public class Joystick extends View implements Runnable {
             mBorderAlpha = styledAttributes.getInt(R.styleable.Joystick_borderAlpha, DEFAULT_ALPHA_BORDER);
             backgroundColor = styledAttributes.getColor(R.styleable.Joystick_backgroundColor, DEFAULT_BACKGROUND_COLOR);
             borderWidth = styledAttributes.getDimensionPixelSize(R.styleable.Joystick_borderWidth, DEFAULT_WIDTH_BORDER);
-            mFixedCenter = styledAttributes.getBoolean(R.styleable.Joystick_fixedCenter, DEFAULT_FIXED_CENTER);
             mAutoReCenterButton = styledAttributes.getBoolean(R.styleable.Joystick_autoReCenterButton, DEFAULT_AUTO_RECENTER_BUTTON);
             mButtonStickToBorder = styledAttributes.getBoolean(R.styleable.Joystick_buttonStickToBorder, DEFAULT_BUTTON_STICK_TO_BORDER);
             buttonDrawable = styledAttributes.getDrawable(R.styleable.Joystick_buttonImage);
@@ -251,113 +225,89 @@ public class Joystick extends View implements Runnable {
         if (MeasureSpec.getMode(measureSpec) != MeasureSpec.UNSPECIFIED) {
             measure=MeasureSpec.getSize(measureSpec);
         }
-
         return measure;
     }
 
     /**
-     * Overrided method, handle touch screen motion event. Move the button according to the
-     * finger coordinate and detect longPress by multiple pointers only.
+     * Overrided method, handle touch screen motion event. Move the joystick button according to the
+     * finger coordinate. The button movement depends too on the class flags state.
      * @param event The motion event.
      * @return True if the event was handled, false otherwise.
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // if disabled we don't move the
-        if (!enabled) {
-            return true;
-        }
+        if (enabled) {
 
-        // to move the button according to the finger coordinate
-        // (or limited to one axe according to direction option
-        mPosY = mButtonDirection < 0 ? mCenterY : (int) event.getY(); // direction negative is horizontal axe
-        mPosX = mButtonDirection > 0 ? mCenterX : (int) event.getX(); // direction positive is vertical axe
+            setPositions(event);
 
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-
-            // stop listener because the finger left the touch screen
-            mThread.interrupt();
-
-            // re-center the button or not (depending on settings)
-            if (mAutoReCenterButton) {
-                resetButtonPosition();
-
-                // update now the last strength and angle which should be zero after resetButton
-                if (mCallback != null)
-                    mCallback.onMove(getAngle(), getStrength());
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                onJoystickReleased();
+            }else if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                onJosytickSelected();
             }
 
-            // if mAutoReCenterButton is false we will send the last strength and angle a bit
-            // later only after processing new position X and Y otherwise it could be above the border limit
-        }
+            double abs = Math.sqrt((mPosX - mCenterX) * (mPosX - mCenterX)
+                    + (mPosY - mCenterY) * (mPosY - mCenterY));
 
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (mThread != null && mThread.isAlive()) {
-                mThread.interrupt();
+            if (abs > mBorderRadius || (mButtonStickToBorder && abs != 0)) {
+                mPosX = (int) ((mPosX - mCenterX) * mBorderRadius / abs + mCenterX);
+                mPosY = (int) ((mPosY - mCenterY) * mBorderRadius / abs + mCenterY);
             }
 
-            mThread = new Thread(this);
-            mThread.start();
-
-            if (mCallback != null)
-                mCallback.onMove(getAngle(), getStrength());
-        }
-
-        // handle first touch and long press with multiple touch only
-        switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                // when the first touch occurs we update the center (if set to auto-defined center)
-                if (!mFixedCenter) {
-                    mCenterX = mPosX;
-                    mCenterY = mPosY;
+            if (!mAutoReCenterButton) {
+                if (moveListener != null) {
+                    moveListener.onMove(getAngle(), getStrength());
                 }
-                break;
-
-            case MotionEvent.ACTION_POINTER_DOWN: {
-                // when the second finger touch
-                if (event.getPointerCount() == 2) {
-                    mHandlerMultipleLongPress.postDelayed(mRunnableMultipleLongPress, ViewConfiguration.getLongPressTimeout()*2);
-                    mMoveTolerance = MOVE_TOLERANCE;
-                }
-                break;
             }
-
-            case MotionEvent.ACTION_MOVE:
-                mMoveTolerance--;
-                if (mMoveTolerance == 0) {
-                    mHandlerMultipleLongPress.removeCallbacks(mRunnableMultipleLongPress);
-                }
-                break;
-
-            case MotionEvent.ACTION_POINTER_UP: {
-                // when the last multiple touch is released
-                if (event.getPointerCount() == 2) {
-                    mHandlerMultipleLongPress.removeCallbacks(mRunnableMultipleLongPress);
-                }
-                break;
-            }
+            invalidate();
         }
-
-        double abs = Math.sqrt((mPosX - mCenterX) * (mPosX - mCenterX)
-                + (mPosY - mCenterY) * (mPosY - mCenterY));
-
-        // (abs > mBorderRadius) means button is too far therefore we limit to border
-        // (buttonStickBorder && abs != 0) means wherever is the button we stick it to the border except when abs == 0
-        if (abs > mBorderRadius || (mButtonStickToBorder && abs != 0)) {
-            mPosX = (int) ((mPosX - mCenterX) * mBorderRadius / abs + mCenterX);
-            mPosY = (int) ((mPosY - mCenterY) * mBorderRadius / abs + mCenterY);
-        }
-
-        if (!mAutoReCenterButton) {
-            // Now update the last strength and angle if not reset to center
-            if (mCallback != null)
-                mCallback.onMove(getAngle(), getStrength());
-        }
-
-        // to force a new draw
-        invalidate();
-
         return true;
+    }
+
+    private void onJosytickSelected() {
+        if (mThread != null && mThread.isAlive()) {
+            mThread.interrupt();
+        }
+
+        mThread = new Thread(this);
+        mThread.start();
+
+        if (moveListener != null) {
+            moveListener.onMove(getAngle(), getStrength());
+        }
+    }
+
+    /**
+     * Called when the joystick is not longer pressed. Stops the listener and re-center the button of
+     * the joystick if the re-center flag is true.
+     */
+    private void onJoystickReleased() {
+        mThread.interrupt();
+
+        if (mAutoReCenterButton) {
+            resetButtonPosition();
+            if (moveListener != null) {
+                moveListener.onMove(getAngle(), getStrength());
+            }
+        }
+    }
+
+    /**
+     * To move the button according to the finger coordinate (Can be limited to one axis)
+     * @param event MotionEvent
+     */
+    private void setPositions(MotionEvent event) {
+        if (mButtonDirection < 0){
+            mPosY = mCenterY;
+        } else {
+            mPosY = (int) event.getY();
+        }
+
+        if (mButtonDirection > 0){
+            mPosX = mCenterX;
+        } else {
+            mPosX = (int) event.getX();
+        }
     }
 
     /**
@@ -366,7 +316,11 @@ public class Joystick extends View implements Runnable {
      */
     private int getAngle() {
         int angle = (int) Math.toDegrees(Math.atan2(mCenterY - mPosY, mPosX - mCenterX));
-        return angle < 0 ? angle + 360 : angle;
+        if (angle < 0){
+            angle+=360;
+        }
+
+        return angle;
     }
 
     /**
@@ -392,7 +346,7 @@ public class Joystick extends View implements Runnable {
      * @param listener The object that that will receive the onMove call
      */
     public void setOnMoveListener(OnMoveListener listener) {
-        mCallback = listener;
+        moveListener = listener;
         mLoopInterval = DEFAULT_LOOP_INTERVAL;
     }
 
@@ -402,7 +356,7 @@ public class Joystick extends View implements Runnable {
      * @param loopInterval Refresh rate to be invoked in milliseconds
      */
     public void setOnMoveListener(OnMoveListener listener, int loopInterval) {
-        mCallback = listener;
+        moveListener = listener;
         mLoopInterval = loopInterval;
     }
 
@@ -423,8 +377,9 @@ public class Joystick extends View implements Runnable {
         while (!Thread.interrupted()) {
             post(new Runnable() {
                 public void run() {
-                    if (mCallback != null)
-                        mCallback.onMove(getAngle(), getStrength());
+                    if (moveListener != null) {
+                        moveListener.onMove(getAngle(), getStrength());
+                    }
                 }
             });
 

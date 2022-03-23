@@ -14,7 +14,6 @@
         custom:borderWidth="4dp"
         custom:buttonColor="#FF6E40"
         custom:buttonSizeRatio="15%"
-        custom:fixedCenter="true"
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintTop_toTopOf="parent" />
 
