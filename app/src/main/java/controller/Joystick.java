@@ -33,17 +33,7 @@ public class Joystick extends View implements Runnable {
     private Paint mPaintBackground;
     private Paint mPaintBitmapButton;
     private Bitmap mButtonBitmap;
-
-
-    /*
-     * Ratio used to define the size of the button
-     */
     private float mButtonSizeRatio;
-
-
-    /*
-     * Ratio used to define the size of the background
-     */
     private float mBackgroundSizeRatio;
 
     private int mPosX = 0;
