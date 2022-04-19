@@ -55,6 +55,8 @@ public class InputFragmentController extends Fragment {
                             controllerActivity.getController().connectToIp(ip);
                         }
                     }).start();
+                    controllerActivity.setPacketSender(new PacketSender(controllerActivity.getController()));
+                    controllerActivity.getPacketSender().start();
                 }
                 controllerActivity.getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragmentContainerView, ControllerFragment.class, null)

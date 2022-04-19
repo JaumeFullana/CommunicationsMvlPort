@@ -14,6 +14,7 @@ import communications.R;
 public class ControllerActivity extends AppCompatActivity {
 
     private CommunicationController controller;
+    private PacketSender packetSender;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +28,14 @@ public class ControllerActivity extends AppCompatActivity {
 
     public void setController(CommunicationController controller) {
         this.controller = controller;
+    }
+
+    public PacketSender getPacketSender() {
+        return packetSender;
+    }
+
+    public void setPacketSender(PacketSender packetSender) {
+        this.packetSender = packetSender;
     }
 
     @Override

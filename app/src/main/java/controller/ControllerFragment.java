@@ -20,6 +20,7 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
     private String mac;
     private int lastAngle;
     private int lastStrength;
+    private boolean connected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -30,6 +31,7 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        this.connected = false;
         View view = inflater.inflate(R.layout.fragment_controller, container, false);
         this.activity = ((ControllerActivity)this.getActivity());
         joystick = view.findViewById(R.id.joystickView);
@@ -37,18 +39,34 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
         joystick.setOnMoveListener(new OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                Log.d("angle", ""+angle);
-                Log.d("strength", ""+strength);
                 if (mac != null) {
+
+                    if (!connected){
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                activity.getController().sendMessage(activity.getController().createPacket(mac, 51, null));
+                            }
+                        }).start();
+                        connected = true;
+                    }
+
                     if (lastAngle!=angle || lastStrength!=strength) {
-                        int[] movement = {angle, strength};
-                        ProtocolDataPacket datos = activity.getController().createPacket(mac, 777, movement);
+                        Log.d("move", "angle = "+angle+", strength = "+strength);
+                        ProtocolDataPacket datos = activity.getController().createPacket(mac, 50, new int[] {strength, angle});
+                        /*try {
+                            activity.getPacketSender().packetsList.put(datos);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }*/
+
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 activity.getController().sendMessage(datos);
                             }
                         }).start();
+
                         lastStrength=strength;
                         lastAngle=angle;
                     }
