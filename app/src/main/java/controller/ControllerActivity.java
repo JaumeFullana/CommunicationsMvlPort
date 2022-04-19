@@ -15,6 +15,7 @@ public class ControllerActivity extends AppCompatActivity {
 
     private CommunicationController controller;
     private PacketSender packetSender;
+    private String ip;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +29,14 @@ public class ControllerActivity extends AppCompatActivity {
 
     public void setController(CommunicationController controller) {
         this.controller = controller;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 
     public PacketSender getPacketSender() {

@@ -5,6 +5,9 @@
 package communications;
 
 import static communications.CommunicationController.*;
+
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -339,7 +342,7 @@ class Connection implements Runnable{
         this.addToLookup((String) packetReceived.getSourceID());
         this.connectedMAC = (String) packetReceived.getSourceID();
         boolean validated=false;
-        int deviceType=(int)packetReceived.getObject(); 
+        int deviceType=(int)packetReceived.getObject();
         if (deviceType == MVL){
             validated = true;
             packet = new ProtocolDataPacket(this.controller.getLocalMAC(),this.connectedMAC,5,this.controller.joinMaps());
@@ -383,13 +386,8 @@ class Connection implements Runnable{
      * @param packetReceived This is the last packet received from the starting handshake. 
      */
     void processValidation(ProtocolDataPacket packetReceived){
-        if ((boolean)packetReceived.getObject()){
-            this.controller.addPcConnection(this);
-            this.initiater.connectionEvent(this.connectedMAC);
-        } else {
-            this.closeSocket();
-            this.running=false;
-        }
+        this.controller.addPcConnection(this);
+        this.initiater.connectionEvent(this.connectedMAC);
     }
     
     /**
@@ -482,7 +480,7 @@ class Connection implements Runnable{
      */
     void receiveLookupTable2(ProtocolDataPacket packetReceived){
         this.addToLookup((HashMap<String,Integer>)packetReceived.getObject());
-        send(new ProtocolDataPacket(this.controller.getLocalMAC(),this.connectedMAC,7,true));
+        send(new ProtocolDataPacket(this.controller.getLocalMAC(),this.connectedMAC,7,null));
     }
     
     /**

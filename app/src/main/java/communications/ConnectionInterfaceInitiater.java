@@ -4,6 +4,8 @@
  */
 package communications;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 /**

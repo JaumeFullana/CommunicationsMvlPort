@@ -47,17 +47,7 @@ public class InputFragmentController extends Fragment {
         this.connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String ip=ipEditText.getText().toString();
-                if (ip!=null && !ip.isEmpty()){
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            controllerActivity.getController().connectToIp(ip);
-                        }
-                    }).start();
-                    controllerActivity.setPacketSender(new PacketSender(controllerActivity.getController()));
-                    controllerActivity.getPacketSender().start();
-                }
+                controllerActivity.setIp(ipEditText.getText().toString());
                 controllerActivity.getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragmentContainerView, ControllerFragment.class, null)
                         .setReorderingAllowed(true)

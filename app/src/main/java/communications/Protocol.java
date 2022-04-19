@@ -31,7 +31,7 @@ class Protocol {
         this.protocolList.add(new ProtocolDescription(6, "Receive Lookup Table2", "Hashmap<String,Integer>"));
         //antes de validar pasa lookup tables
         //conectedMac pasarles a sa lookup quan s'obri sa conexio
-        this.protocolList.add(new ProtocolDescription(7, "Validate connection", "Boolean"));
+        this.protocolList.add(new ProtocolDescription(7, "Validate connection", "Null"));
         this.protocolList.add(new ProtocolDescription(8, "Close connection", "Null"));
         this.protocolList.add(new ProtocolDescription(9, "Traceroute", "ArrayList <String>"));
         this.protocolList.add(new ProtocolDescription(10, "Available Connections", "ArrayList <String>"));
