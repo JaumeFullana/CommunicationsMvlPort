@@ -14,7 +14,6 @@ import communications.R;
 public class ControllerActivity extends AppCompatActivity {
 
     private CommunicationController controller;
-    private PacketSender packetSender;
     private String ip;
 
     @Override
@@ -37,14 +36,6 @@ public class ControllerActivity extends AppCompatActivity {
 
     public void setIp(String ip) {
         this.ip = ip;
-    }
-
-    public PacketSender getPacketSender() {
-        return packetSender;
-    }
-
-    public void setPacketSender(PacketSender packetSender) {
-        this.packetSender = packetSender;
     }
 
     @Override
