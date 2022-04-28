@@ -42,8 +42,6 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
                     controllerActivity.getController().connectToIp(controllerActivity.getIp());
                 }
             }).start();
-            //controllerActivity.setPacketSender(new PacketSender(controllerActivity.getController()));
-            //controllerActivity.getPacketSender().start();
         }
 
         joystick = view.findViewById(R.id.joystickView);
@@ -52,7 +50,7 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
             @Override
             public void onMove(int angle, int strength) {
                 if (mac != null) {
-                    if (!connected){
+                    /*if (!connected){
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -60,16 +58,11 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
                             }
                         }).start();
                         connected = true;
-                    }
+                    }*/
 
                     if (lastAngle!=angle || lastStrength!=strength) {
-                        Log.d("move", "angle = "+angle+", strength = "+strength);
+                        //Log.d("move", "angle = "+angle+", strength = "+strength);
                         ProtocolDataPacket datos = controllerActivity.getController().createPacket(mac, 50, new int[] {strength, angle});
-                        /*try {
-                            activity.getPacketSender().packetsList.put(datos);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }*/
 
                         new Thread(new Runnable() {
                             @Override
