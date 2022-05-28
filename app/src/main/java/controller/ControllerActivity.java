@@ -18,6 +18,7 @@ public class ControllerActivity extends AppCompatActivity {
 
     private CommunicationController controller;
     private String ip;
+    private Audio audio;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +52,14 @@ public class ControllerActivity extends AppCompatActivity {
     }
 
     public void playSound(View view) {
-        Audio audio = new Audio(R.raw.audio);
+        audio = new Audio(this, R.raw.audio);
+    }
+
+    public void pauseSound(View view) {
+        audio.pause();
+    }
+
+    public void stopSound(View view) {
+        audio.stop();
     }
 }

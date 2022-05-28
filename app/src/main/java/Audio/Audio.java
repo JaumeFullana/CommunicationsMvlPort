@@ -8,17 +8,18 @@ import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 
 import communications.R;
+import controller.ControllerActivity;
 
 public class Audio extends AppCompatActivity {
     // Declare a MediaPlayer object reference
     MediaPlayer mediaPlayer;
 
-    public Audio(int audio) {
+    public Audio(ControllerActivity context, int audio) {
 
 
         Log.d("test", "onclick " + audio);
         if(mediaPlayer == null){
-            mediaPlayer = MediaPlayer.create(this, R.raw.audio);
+            mediaPlayer = MediaPlayer.create(context, audio);
         }
         // Then, register OnCompletionListener that calls a user supplied callback method onCompletion() when
         // looping mode was set to false to indicate playback is completed.
@@ -34,7 +35,7 @@ public class Audio extends AppCompatActivity {
 
     }
 
-    private void stop() {
+    public void stop() {
         if(mediaPlayer != null){
             // Here, call stop() method on mediaPlayer to stop the music.
             mediaPlayer.stop();
@@ -43,7 +44,7 @@ public class Audio extends AppCompatActivity {
         }
     }
 
-    private void pause() {
+    public void pause() {
         if(mediaPlayer != null) {
             // Here, call pause() method on mediaPlayer to pause the music.
             mediaPlayer.pause();
