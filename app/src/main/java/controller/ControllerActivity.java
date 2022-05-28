@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Toolbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -45,5 +46,8 @@ public class ControllerActivity extends AppCompatActivity {
             imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    public void setSupportActionBar(Toolbar myToolbar) {
     }
 }

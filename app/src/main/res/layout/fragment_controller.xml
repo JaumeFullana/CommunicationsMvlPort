@@ -1,14 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent"
+        custom:layout_constraintHorizontal_bias="1.0"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintVertical_bias="0.0" />
+
     <controller.Joystick
         android:id="@+id/joystickView"
-        android:rotationX="-180"
         android:layout_width="409dp"
         android:layout_height="206dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="96dp"
+        android:rotationX="-180"
         custom:backgroundColor="#009688"
         custom:borderColor="#00796B"
         custom:borderWidth="4dp"
@@ -16,5 +33,19 @@
         custom:buttonSizeRatio="15%"
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/fire"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="43dp"
+        android:layout_marginEnd="274dp"
+        android:layout_marginBottom="268dp"
+        android:text="Button"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent"
+        custom:layout_constraintHorizontal_bias="1.0"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintTop_toBottomOf="@+id/joystickView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
