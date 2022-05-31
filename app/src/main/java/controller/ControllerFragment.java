@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import communications.ConnectionInterface;
 import communications.ProtocolDataPacket;
@@ -16,6 +17,7 @@ import communications.R;
 public class ControllerFragment extends Fragment implements ConnectionInterface {
 
     private Joystick joystick;
+    private Button fire;
     private ControllerActivity controllerActivity;
     private String mac;
     private int lastAngle;
@@ -45,6 +47,7 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
         }
 
         joystick = view.findViewById(R.id.joystickView);
+        fire = view.findViewById(R.id.fire);
         this.connected = false;
         joystick.setOnMoveListener(new OnMoveListener() {
             @Override
@@ -64,6 +67,21 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
                         lastAngle=angle;
                     }
                 }
+            }
+        });
+
+        fire.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                ProtocolDataPacket datos = controllerActivity.getController().createPacket(mac, 314, null);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        controllerActivity.getController().sendMessage(datos);
+                    }
+                }).start();
             }
         });
 

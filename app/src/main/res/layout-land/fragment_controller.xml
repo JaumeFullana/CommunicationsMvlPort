@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintTop_toTopOf="parent">
+
+        <controller.Joystick
+            android:id="@+id/joystickView"
+            android:layout_width="409dp"
+            android:layout_height="206dp"
+            android:layout_marginRight="250dp"
+            android:rotationX="-180"
+            custom:backgroundColor="#009688"
+            custom:borderColor="#00796B"
+            custom:borderWidth="4dp"
+            custom:buttonColor="#FF6E40"
+            custom:buttonSizeRatio="15%" />
+
+        <Button
+            android:id="@+id/fire"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fire!" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
