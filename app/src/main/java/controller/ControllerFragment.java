@@ -50,18 +50,7 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
             @Override
             public void onMove(int angle, int strength) {
                 if (mac != null) {
-                    /*if (!connected){
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                controllerActivity.getController().sendMessage(controllerActivity.getController().createPacket(mac, 51, null));
-                            }
-                        }).start();
-                        connected = true;
-                    }*/
-
                     if (lastAngle!=angle || lastStrength!=strength) {
-                        //Log.d("move", "angle = "+angle+", strength = "+strength);
                         ProtocolDataPacket datos = controllerActivity.getController().createPacket(mac, 50, new int[] {strength, angle});
 
                         new Thread(new Runnable() {

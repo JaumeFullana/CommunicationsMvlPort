@@ -18,7 +18,6 @@ public class InputFragmentController extends Fragment {
 
     private EditText ipEditText;
     private Button connectButton;
-    private Thread backEndThread;
     private ControllerActivity controllerActivity;
 
     @Override
@@ -36,13 +35,12 @@ public class InputFragmentController extends Fragment {
         this.connectButton=(Button)view.findViewById(R.id.connectButton);
         this.controllerActivity =(ControllerActivity)getActivity();
 
-        backEndThread=new Thread(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 controllerActivity.setController(new CommunicationController(controllerActivity.getApplicationContext()));
             }
-        });
-        backEndThread.start();
+        }).start();
 
         this.connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
