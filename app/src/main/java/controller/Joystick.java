@@ -275,9 +275,10 @@ public class Joystick extends View implements Runnable {
         mThread.interrupt();
 
         if (mAutoReCenterButton) {
+            int angle = getAngle();
             resetButtonPosition();
             if (moveListener != null) {
-                moveListener.onMove(getAngle(), getStrength());
+                moveListener.onMove(angle, getStrength());
             }
         }
     }

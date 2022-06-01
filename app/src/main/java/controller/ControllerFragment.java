@@ -90,7 +90,11 @@ public class ControllerFragment extends Fragment implements ConnectionInterface 
 
     @Override
     public void onMessageReceived(ProtocolDataPacket packet) {
-
+        switch (packet.getId()){
+            case 180:
+                this.mac = (String)packet.getObject();
+                break;
+        }
     }
 
     @Override
